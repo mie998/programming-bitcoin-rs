@@ -19,7 +19,7 @@ impl Point {
             },
             (Some(x), Some(y)) => {
                 if y.pow(2) != x.pow(3) + a * x + b {
-                    panic!("Points {} {} are not on the same curve!", x, y);
+                    panic!("Points {} {} are not on the curve!", x, y);
                 };
                 Point {
                     x: Some(x),
@@ -54,7 +54,7 @@ impl Add for Point {
             }
         }
 
-        // case: Points are on the same curvesand on normal positions
+        // case: Points are on the same curve and on normal positions
         match (self.x, other.x) {
             (None, _) => other,
             (_, None) => self,
