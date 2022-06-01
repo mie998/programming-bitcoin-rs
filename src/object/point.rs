@@ -42,11 +42,11 @@ impl Add for Point {
 
         // case: Points are on the same curve and meet a special condition
         if self == other {
-            let self_x = self.x.unwrap();
-            let self_y = self.y.unwrap();
+            let (self_x, self_y) = (self.x.unwrap(), self.y.unwrap());
             if self_x == 0 * self_y {
                 return Self::new(None, None, self.a, self.b);
             } else {
+                // TODO: usize のままではいい感じに計算できていない可能性がある。
                 let s = (3 * self_x.pow(2) + self.a) / (2 * self_y);
                 let x = s.pow(2) - 2 * self_x;
                 let y = s * (self_x - x) - self_y;
@@ -62,8 +62,8 @@ impl Add for Point {
                 if self_x == other_x {
                     Self::new(None, None, self.a, self.b)
                 } else {
-                    let self_y = self.y.unwrap();
-                    let other_y = other.y.unwrap();
+                    let (self_y, other_y) = (self.y.unwrap(), other.y.unwrap());
+                    // TODO: usize のままではいい感じに計算できていない可能性がある。
                     let s = (other_y - self_y) / (other_x - self_x);
                     let x = s.pow(2) - self_x - other_x;
                     let y = s * (self_x - x) - self_y;
