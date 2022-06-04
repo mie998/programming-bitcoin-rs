@@ -2,8 +2,8 @@ use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct FieldElement {
-    num: usize,
-    prime: usize,
+    pub num: usize,
+    pub prime: usize,
 }
 
 impl FieldElement {
@@ -28,7 +28,7 @@ impl Add for FieldElement {
     type Output = Self;
     fn add(self, other: Self) -> Self {
         if self.prime != other.prime {
-            panic!("cann't")
+            panic!("can't add")
         };
 
         let num = (self.num + other.num) % self.prime;
@@ -40,7 +40,7 @@ impl Sub for FieldElement {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
         if self.prime != other.prime {
-            panic!("cann't")
+            panic!("can't sub")
         };
 
         let num = (self.num - other.num) % self.prime;
@@ -52,7 +52,7 @@ impl Mul for FieldElement {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
         if self.prime != other.prime {
-            panic!("cann't")
+            panic!("can't mul")
         };
 
         let num = (self.num * other.num) % self.prime;
@@ -64,7 +64,7 @@ impl Div for FieldElement {
     type Output = Self;
     fn div(self, other: Self) -> Self {
         if self.prime != other.prime {
-            panic!("cann't")
+            panic!("can't div")
         };
 
         let other_inverse = other.pow((self.prime - 2).try_into().unwrap());
