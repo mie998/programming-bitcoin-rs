@@ -72,3 +72,46 @@ impl Div for FieldElement {
         return Self::new(num, self.prime);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn num_exceeds_prime() {
+        FieldElement::new(8, 5);
+    }
+
+    #[test]
+    fn add() {
+        let f1 = FieldElement::new(3, 13);
+        let f2 = FieldElement::new(4, 13);
+        let f3 = FieldElement::new(7, 13);
+        assert_eq!(f1 + f2, f3);
+    }
+
+    #[test]
+    fn sub() {
+        let f1 = FieldElement::new(3, 13);
+        let f2 = FieldElement::new(4, 13);
+        let f3 = FieldElement::new(1, 13);
+        assert_eq!(f2 - f1, f3);
+    }
+
+    #[test]
+    fn mul() {
+        let f1 = FieldElement::new(3, 13);
+        let f2 = FieldElement::new(4, 13);
+        let f3 = FieldElement::new(12, 13);
+        assert_eq!(f1 * f2, f3);
+    }
+
+    #[test]
+    fn div() {
+        let f1 = FieldElement::new(2, 13);
+        let f2 = FieldElement::new(4, 13);
+        let f3 = FieldElement::new(7, 13);
+        assert_eq!(f1 / f2, f3);
+    }
+}

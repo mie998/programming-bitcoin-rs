@@ -2,14 +2,14 @@ use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Point {
-    x: Option<usize>,
-    y: Option<usize>,
-    a: usize,
-    b: usize,
+    x: Option<isize>,
+    y: Option<isize>,
+    a: isize,
+    b: isize,
 }
 
 impl Point {
-    pub fn new(x: Option<usize>, y: Option<usize>, a: usize, b: usize) -> Point {
+    pub fn new(x: Option<isize>, y: Option<isize>, a: isize, b: isize) -> Point {
         match (x, y) {
             (None, _) | (_, None) => Point {
                 x: None,
@@ -46,7 +46,7 @@ impl Add for Point {
             if self_x == 0 * self_y {
                 return Self::new(None, None, self.a, self.b);
             } else {
-                // TODO: usize のままではいい感じに計算できていない可能性がある。
+                // TODO: isize のままではいい感じに計算できていない可能性がある。
                 let s = (3 * self_x.pow(2) + self.a) / (2 * self_y);
                 let x = s.pow(2) - 2 * self_x;
                 let y = s * (self_x - x) - self_y;
@@ -63,7 +63,7 @@ impl Add for Point {
                     Self::new(None, None, self.a, self.b)
                 } else {
                     let (self_y, other_y) = (self.y.unwrap(), other.y.unwrap());
-                    // TODO: usize のままではいい感じに計算できていない可能性がある。
+                    // TODO: isize のままではいい感じに計算できていない可能性がある。
                     let s = (other_y - self_y) / (other_x - self_x);
                     let x = s.pow(2) - self_x - other_x;
                     let y = s * (self_x - x) - self_y;
@@ -72,4 +72,30 @@ impl Add for Point {
             }
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn not_on_curve() {
+        Point::new(Some(1), Some(1), 1, 1);
+    }
+
+    #[test]
+    fn add_not_on_same_curve() {
+        let p1 = Point::new(Some(-1), Some(1), 5, 7);
+        let p2 = Point::new(Some(1), Some(1), -1, 1);
+        let p3 = p1 + p2;
+    }
+
+    // !TODO: test 続き
+    // #[test]
+    // fn add_normal_point_to_special() {
+    //     let p1 = Point::new(Some(-1), Some(1), 5, 7);
+    //     let p2 = Point::new(Some(-1), Some(1), 5, 7);
+    //     let p2 = Point::new(Some(-1), Some(1), 5, 7);
+    // }
 }
