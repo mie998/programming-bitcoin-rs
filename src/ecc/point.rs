@@ -98,6 +98,9 @@ mod tests {
     fn one() -> FE {
         FE::new(1, PRIME)
     }
+    fn two() -> FE {
+        FE::new(2, PRIME)
+    }
     fn five() -> FE {
         FE::new(5, PRIME)
     }
@@ -122,11 +125,68 @@ mod tests {
         let p3 = p1 + p2;
     }
 
-    // !TODO: test 続き
-    // #[test]
-    // fn add_normal_point_to_special() {
-    //     let p1 = Point::new(Some(-1), Some(1), 5, 7);
-    //     let p2 = Point::new(Some(-1), Some(1), 5, 7);
-    //     let p2 = Point::new(Some(-1), Some(1), 5, 7);
-    // }
+    #[test]
+    fn add_fst_is_infinite() {
+        let p1 = Point::new(None, None, five(), seven());
+        let p2 = Point::new(Some(neg_one()), Some(one()), five(), seven());
+        let p3 = p1 + p2;
+        assert_eq!(p3, p2)
+    }
+
+    #[test]
+    fn add_snd_is_infinite() {
+        let p1 = Point::new(Some(neg_one()), Some(one()), five(), seven());
+        let p2 = Point::new(None, None, five(), seven());
+        let p3 = p1 + p2;
+        assert_eq!(p3, p1)
+    }
+
+    #[test]
+    fn add_normal() {
+        let p1 = Point::new(Some(neg_one()), Some(neg_one()), five(), seven());
+        let p2 = Point::new(Some(two()), Some(five()), five(), seven());
+        let p3 = p1 + p2;
+        assert_eq!(
+            p3,
+            Point::new(
+                Some(FE::new(3, PRIME)),
+                Some(zero() - FE::new(7, PRIME)),
+                p1.a,
+                p2.b
+            )
+        )
+    }
+
+    #[test]
+    fn add_same_x() {
+        let p1 = Point::new(Some(neg_one()), Some(one()), five(), seven());
+        let p2 = Point::new(Some(neg_one()), Some(neg_one()), five(), seven());
+        let p3 = p1 + p2;
+        assert_eq!(p3.x, None);
+        assert_eq!(p3.y, None);
+    }
+
+    #[test]
+    fn add_double_roots() {
+        let p1 = Point::new(Some(neg_one()), Some(neg_one()), five(), seven());
+        let p2 = Point::new(Some(neg_one()), Some(neg_one()), five(), seven());
+        let p3 = p1 + p2;
+        assert_eq!(
+            p3,
+            Point::new(
+                Some(FE::new(18, PRIME)),
+                Some(FE::new(77, PRIME)),
+                p1.a,
+                p2.b
+            )
+        )
+    }
+
+    #[test]
+    fn add_triple_roots() {
+        let p1 = Point::new(Some(zero()), Some(one()), neg_one(), one());
+        let p2 = Point::new(Some(zero()), Some(one()), neg_one(), one());
+        let p3 = p1 + p2;
+        assert_eq!(p3, Point::new(None, None, neg_one(), one()));
+    }
 }

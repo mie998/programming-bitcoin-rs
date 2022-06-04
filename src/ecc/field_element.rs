@@ -8,14 +8,12 @@ pub struct FieldElement {
 
 impl FieldElement {
     pub fn new(num: usize, prime: usize) -> Self {
-        if num > prime {
-            panic!("num should not exceed prime")
-        }
         if prime < 2 {
             panic!("prime should be more than 2 or equal to 2")
         }
 
-        Self { num, prime }
+        let n: usize = num.rem_euclid(prime);
+        Self { num: n, prime }
     }
 
     pub fn pow(self, exponent: u32) -> Self {
@@ -43,8 +41,14 @@ impl Sub for FieldElement {
             panic!("can't sub")
         };
 
-        let num = (self.num - other.num) % self.prime;
-        return Self::new(num, self.prime);
+        if self.num < other.num {
+            // !TODO: ここキャストしすぎで汚い
+            let num = (self.num as isize - other.num as isize).rem_euclid(self.prime as isize);
+            return Self::new(num as usize, self.prime);
+        } else {
+            let num = (self.num - other.num) % self.prime;
+            return Self::new(num, self.prime);
+        }
     }
 }
 
@@ -78,12 +82,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[should_panic]
-    fn num_exceeds_prime() {
-        FieldElement::new(8, 5);
-    }
-
-    #[test]
     fn add() {
         let f1 = FieldElement::new(3, 13);
         let f2 = FieldElement::new(4, 13);
@@ -97,6 +95,14 @@ mod tests {
         let f2 = FieldElement::new(4, 13);
         let f3 = FieldElement::new(1, 13);
         assert_eq!(f2 - f1, f3);
+    }
+
+    #[test]
+    fn sub_overflow() {
+        let f1 = FieldElement::new(3, 13);
+        let f2 = FieldElement::new(4, 13);
+        let f3 = FieldElement::new(12, 13);
+        assert_eq!(f1 - f2, f3);
     }
 
     #[test]
