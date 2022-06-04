@@ -112,6 +112,24 @@ mod tests {
     }
 
     #[test]
+    fn rmul() {
+        let prime = 223;
+        let x = Some(FE::new(47, prime));
+        let y = Some(FE::new(71, prime));
+        let a = FE::new(0, prime);
+        let b = FE::new(7, prime);
+        let p = Point::new(x, y, a, b);
+        let mut v: Vec<(usize, usize)> = vec![];
+        for i in 1..6 {
+            let result = p.rmul(i);
+            v.push((result.x.unwrap().num, result.y.unwrap().num));
+            println!("{}, {}", result.x.unwrap().num, result.y.unwrap().num);
+        }
+        let answers = vec![(47, 71), (36, 111), (15, 137), (194, 51), (126, 96)];
+        assert_eq!(v, answers);
+    }
+
+    #[test]
     #[should_panic]
     fn not_on_curve() {
         Point::new(Some(one()), Some(one()), one(), one());
@@ -122,7 +140,7 @@ mod tests {
     fn add_not_on_same_curve() {
         let p1 = Point::new(Some(neg_one()), Some(one()), five(), seven());
         let p2 = Point::new(Some(one()), Some(one()), neg_one(), one());
-        let p3 = p1 + p2;
+        let _p3 = p1 + p2;
     }
 
     #[test]

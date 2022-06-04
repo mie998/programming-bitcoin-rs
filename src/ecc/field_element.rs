@@ -16,9 +16,14 @@ impl FieldElement {
         Self { num: n, prime }
     }
 
-    pub fn pow(self, exponent: u32) -> Self {
-        let e = exponent % (self.prime as u32 - 1);
-        return Self::new(self.num.pow(e) % self.prime, self.prime);
+    pub fn pow(self, exponent: i32) -> Self {
+        let mut e = exponent.rem_euclid((self.prime - 1) as i32) as u32;
+        let mut ans = self.clone();
+        while e > 0 {
+            ans = ans * self;
+            e -= 1;
+        }
+        return Self::new(ans.num, self.prime);
     }
 }
 
@@ -68,8 +73,11 @@ impl Div for FieldElement {
     type Output = Self;
     fn div(self, other: Self) -> Self {
         if self.prime != other.prime {
-            panic!("can't div")
+            panic!("can't div");
         };
+        if other.num == 0 {
+            panic!("can't div by zero");
+        }
 
         let other_inverse = other.pow((self.prime - 2).try_into().unwrap());
         let num = (self.num * other_inverse.num) % self.prime;
@@ -83,8 +91,8 @@ mod tests {
 
     #[test]
     fn add() {
-        let f1 = FieldElement::new(3, 13);
-        let f2 = FieldElement::new(4, 13);
+        let f1 = FieldElement::new(9, 13);
+        let f2 = FieldElement::new(11, 13);
         let f3 = FieldElement::new(7, 13);
         assert_eq!(f1 + f2, f3);
     }
