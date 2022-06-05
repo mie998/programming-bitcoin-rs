@@ -32,7 +32,7 @@ impl Point {
         }
     }
 
-    pub fn rmul(self, coefficient: isize) -> Self {
+    pub fn rmul(self, coefficient: usize) -> Self {
         let mut coef = coefficient.clone();
         let mut current = self.clone();
         let mut result = Self::new(None, None, self.a, self.b);
