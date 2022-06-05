@@ -17,13 +17,17 @@ impl FieldElement {
     }
 
     pub fn pow(self, exponent: i32) -> Self {
-        let mut e = exponent.rem_euclid((self.prime - 1) as i32) as u32;
-        let mut ans = self.clone();
+        let mut e = exponent.rem_euclid((self.prime - 1) as i32);
+        let mut current = FieldElement::new(1, self.prime);
+        let mut coef = self.clone();
         while e > 0 {
-            ans = ans * self;
-            e -= 1;
+            if e & 1 == 1 {
+                current = current * coef;
+            }
+            coef = coef * coef;
+            e >>= 1;
         }
-        return Self::new(ans.num, self.prime);
+        return current;
     }
 }
 
@@ -90,6 +94,22 @@ mod tests {
     use super::*;
 
     #[test]
+    fn pow() {
+        let f1 = FieldElement::new(9, 13);
+        let e = 3;
+        let f2 = FieldElement::new(1, 13);
+        assert_eq!(f2, f1.pow(e));
+    }
+
+    #[test]
+    fn pow_neg() {
+        let f1 = FieldElement::new(3, 13);
+        let e = -9;
+        let f2 = FieldElement::new(1, 13);
+        assert_eq!(f2, f1.pow(e));
+    }
+
+    #[test]
     fn add() {
         let f1 = FieldElement::new(9, 13);
         let f2 = FieldElement::new(11, 13);
@@ -118,6 +138,15 @@ mod tests {
         let f1 = FieldElement::new(3, 13);
         let f2 = FieldElement::new(4, 13);
         let f3 = FieldElement::new(12, 13);
+        assert_eq!(f1 * f2, f3);
+    }
+
+    #[test]
+    fn mul_overflow() {
+        let max = usize::MAX;
+        let f1 = FieldElement::new(max, 13);
+        let f2 = FieldElement::new(max, 13);
+        let f3 = FieldElement::new(4, 13);
         assert_eq!(f1 * f2, f3);
     }
 
