@@ -1,7 +1,7 @@
 use super::field_element::FieldElement as FE;
 use std::ops::Add;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Point {
     x: Option<FE>,
     y: Option<FE>,
