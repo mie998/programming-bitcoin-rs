@@ -1,6 +1,7 @@
+use impl_ops::*;
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FieldElement {
@@ -35,19 +36,28 @@ impl FieldElement {
     }
 }
 
-impl Add for FieldElement {
-    type Output = Self;
-    fn add(self, other: Self) -> Self {
-        if self.prime != other.prime {
-            panic!("can't add")
-        };
+// impl ops::Add for FieldElement {
+//     type Output = Self;
+//     fn add(self, other: Self) -> Self {
+//         if self.prime != other.prime {
+//             panic!("can't add")
+//         };
 
-        let num = (self.num + other.num) % &self.prime;
-        return Self::new(num, self.prime);
-    }
-}
+//         let num = (self.num + other.num) % &self.prime;
+//         return Self::new(num, self.prime);
+//     }
+// }
 
-impl Sub for FieldElement {
+impl_ops::impl_op_ex!(+ |a: &FieldElement, b: &FieldElement| -> FieldElement {
+    if &a.prime != &b.prime {
+        panic!("can't add")
+    };
+
+    let num = (&a.num + &b.num) % &a.prime;
+    return FieldElement{num, prime: a.prime.clone()};
+});
+
+impl ops::Sub for FieldElement {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
         if self.prime != other.prime {
@@ -60,7 +70,7 @@ impl Sub for FieldElement {
     }
 }
 
-impl Mul for FieldElement {
+impl ops::Mul for FieldElement {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
         if self.prime != other.prime {
@@ -72,7 +82,7 @@ impl Mul for FieldElement {
     }
 }
 
-impl Div for FieldElement {
+impl ops::Div for FieldElement {
     type Output = Self;
     fn div(self, other: Self) -> Self {
         if self.prime != other.prime {
