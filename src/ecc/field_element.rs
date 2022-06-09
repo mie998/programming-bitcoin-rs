@@ -27,9 +27,9 @@ impl FieldElement {
         let mut coef = self.clone();
         while e > BigInt::zero() {
             if &e % BigInt::from(2u8) == One::one() {
-                current = current.clone() * coef.clone();
+                current = &current * &coef;
             }
-            coef = coef.clone() * coef.clone();
+            coef = &coef * &coef;
             e /= 2;
         }
         return current;
@@ -64,11 +64,11 @@ impl_ops::impl_op_ex!(*|a: &FieldElement, b: &FieldElement| -> FieldElement {
     return FieldElement::new(num, a.prime.clone());
 });
 
-impl_ops::impl_op_ex!(/|a: &FieldElement, b: &FieldElement| -> FieldElement {
+impl_ops::impl_op_ex!(/ |a: &FieldElement, b: &FieldElement| -> FieldElement {
     if &a.prime != &b.prime {
         panic!("can't sub")
     }
-    if &b.num <= &BigInt::zero() {
+    if &b.num == &BigInt::zero() {
         panic!("can't div by zero");
 
     }
