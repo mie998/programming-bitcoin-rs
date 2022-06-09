@@ -1,7 +1,7 @@
 use super::field_element::FieldElement as FE;
 use impl_ops::*;
 use num_bigint::BigInt;
-use num_traits::{One, Zero};
+use num_traits::{ToPrimitive, Zero};
 use std::ops;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -98,7 +98,7 @@ mod tests {
         FE::new(BigInt::zero(), prime())
     }
     fn one() -> FE {
-        FE::new(BigInt::one(), prime())
+        FE::new(BigInt::from(1u8), prime())
     }
     fn two() -> FE {
         FE::new(BigInt::from(2u8), prime())
@@ -113,23 +113,25 @@ mod tests {
         zero() - one()
     }
 
-    // #[test]
-    // fn rmul() {
-    //     let prime = 223;
-    //     let x = Some(FE::new(47, prime));
-    //     let y = Some(FE::new(71, prime));
-    //     let a = FE::new(0, prime);
-    //     let b = FE::new(7, prime);
-    //     let p = Point::new(x, y, a, b);
-    //     let mut v: Vec<(usize, usize)> = vec![];
-    //     for i in 1..6 {
-    //         let result = p.rmul(i);
-    //         v.push((result.x.unwrap().num, result.y.unwrap().num));
-    //         println!("{}, {}", result.x.unwrap().num, result.y.unwrap().num);
-    //     }
-    //     let answers = vec![(47, 71), (36, 111), (15, 137), (194, 51), (126, 96)];
-    //     assert_eq!(v, answers);
-    // }
+    #[test]
+    fn rmul() {
+        let pn = BigInt::from(223u16);
+        let x = Some(FE::new(BigInt::from(47u8), pn.clone()));
+        let y = Some(FE::new(BigInt::from(71u8), pn.clone()));
+        let a = FE::new(BigInt::zero(), pn.clone());
+        let b = FE::new(BigInt::from(7u8), pn.clone());
+        let p = Point::new(x, y, a, b);
+        let mut v: Vec<(usize, usize)> = vec![];
+        for i in 1..6 {
+            let result = p.clone().rmul(i);
+            v.push((
+                result.x.unwrap().num.to_usize().unwrap(),
+                result.y.unwrap().num.to_usize().unwrap(),
+            ));
+        }
+        let answers = vec![(47, 71), (36, 111), (15, 137), (194, 51), (126, 96)];
+        assert_eq!(v, answers);
+    }
 
     #[test]
     #[should_panic]
