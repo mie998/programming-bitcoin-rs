@@ -23,9 +23,9 @@ impl FieldElement {
 
     pub fn pow(self, exponent: i32) -> Self {
         let mut e = (BigInt::from(exponent) + &self.prime - 1) % (&self.prime - BigInt::from(1u8));
-        let mut current = FieldElement::new(One::one(), self.prime.clone());
+        let mut current = FieldElement::new(BigInt::one(), self.prime.clone());
         let mut coef = self.clone();
-        while e > Zero::zero() {
+        while e > BigInt::zero() {
             if &e % BigInt::from(2u8) == One::one() {
                 current = current.clone() * coef.clone();
             }
@@ -36,69 +36,49 @@ impl FieldElement {
     }
 }
 
-// impl ops::Add for FieldElement {
-//     type Output = Self;
-//     fn add(self, other: Self) -> Self {
-//         if self.prime != other.prime {
-//             panic!("can't add")
-//         };
-
-//         let num = (self.num + other.num) % &self.prime;
-//         return Self::new(num, self.prime);
-//     }
-// }
-
 impl_ops::impl_op_ex!(+ |a: &FieldElement, b: &FieldElement| -> FieldElement {
     if &a.prime != &b.prime {
         panic!("can't add")
     };
 
     let num = (&a.num + &b.num) % &a.prime;
-    return FieldElement{num, prime: a.prime.clone()};
+    return FieldElement::new(num, a.prime.clone());
 });
 
-impl ops::Sub for FieldElement {
-    type Output = Self;
-    fn sub(self, other: Self) -> Self {
-        if self.prime != other.prime {
-            panic!("can't sub")
-        };
+impl_ops::impl_op_ex!(-|a: &FieldElement, b: &FieldElement| -> FieldElement {
+    if &a.prime != &b.prime {
+        panic!("can't sub")
+    };
 
-        let prime = &self.prime;
-        let num = (self.num - other.num + prime) % prime;
-        return Self::new(num, self.prime);
+    let prime = &a.prime;
+    let num = (&a.num - &b.num + prime) % prime;
+    return FieldElement::new(num, a.prime.clone());
+});
+
+impl_ops::impl_op_ex!(*|a: &FieldElement, b: &FieldElement| -> FieldElement {
+    if &a.prime != &b.prime {
+        panic!("can't sub")
+    };
+
+    let num = (&a.num * &b.num) % &a.prime;
+    return FieldElement::new(num, a.prime.clone());
+});
+
+impl_ops::impl_op_ex!(/|a: &FieldElement, b: &FieldElement| -> FieldElement {
+    if &a.prime != &b.prime {
+        panic!("can't sub")
     }
-}
+    if &b.num <= &BigInt::zero() {
+        panic!("can't div by zero");
 
-impl ops::Mul for FieldElement {
-    type Output = Self;
-    fn mul(self, other: Self) -> Self {
-        if self.prime != other.prime {
-            panic!("can't mul")
-        };
-
-        let num = (self.num * other.num) % &self.prime;
-        return Self::new(num, self.prime);
     }
-}
 
-impl ops::Div for FieldElement {
-    type Output = Self;
-    fn div(self, other: Self) -> Self {
-        if self.prime != other.prime {
-            panic!("can't div");
-        };
-        if other.num == Zero::zero() {
-            panic!("can't div by zero");
-        }
-
-        let prime = &self.prime;
-        // prime must be more than 2 because this means primary number
-        let other_inverse = other.pow((prime - BigInt::from(2)).try_into().unwrap());
-        let num = (self.num * other_inverse.num) % prime;
-        return Self::new(num, self.prime);
-    }
-}
+    let prime = &a.prime;
+    // prime must be more than 2 because this means primary number
+    let b_inverse = b.clone().pow((prime - BigInt::from(2u8)).try_into().unwrap());
+    let num = (&a.num * b_inverse.num) % prime;
+    return FieldElement::new(num, a.prime.clone());
+});
 
 #[cfg(test)]
 mod tests {
