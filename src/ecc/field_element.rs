@@ -11,7 +11,7 @@ pub struct FieldElement {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct P {
-    value: BigInt,
+    pub value: BigInt,
 }
 
 impl FieldElement {
@@ -31,7 +31,7 @@ impl FieldElement {
         Self { num, prime: p }
     }
 
-    pub fn pow(self, exponent: i32) -> Self {
+    pub fn pow(self, exponent: BigInt) -> Self {
         let mut e = (BigInt::from(exponent) + &self.prime - 1) % (&self.prime - BigInt::from(1u8));
         let mut current = FieldElement::new(BigInt::one(), self.prime.clone());
         let mut coef = self.clone();
@@ -67,7 +67,7 @@ impl_ops::impl_op_ex!(-|a: &FieldElement, b: &FieldElement| -> FieldElement {
 
 impl_ops::impl_op_ex!(*|a: &FieldElement, b: &FieldElement| -> FieldElement {
     if &a.prime != &b.prime {
-        panic!("can't sub")
+        panic!("can't mul")
     };
 
     let num = (&a.num * &b.num) % &a.prime;
@@ -76,7 +76,7 @@ impl_ops::impl_op_ex!(*|a: &FieldElement, b: &FieldElement| -> FieldElement {
 
 impl_ops::impl_op_ex!(/ |a: &FieldElement, b: &FieldElement| -> FieldElement {
     if &a.prime != &b.prime {
-        panic!("can't sub")
+        panic!("can't div")
     }
     if &b.num == &BigInt::zero() {
         panic!("can't div by zero");
@@ -91,7 +91,7 @@ impl_ops::impl_op_ex!(/ |a: &FieldElement, b: &FieldElement| -> FieldElement {
 });
 
 impl P {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let p: BigInt =
             (BigInt::from(2u32)).pow(256) - (BigInt::from(2u32)).pow(32) - BigInt::from(977);
         Self { value: p }
@@ -105,7 +105,7 @@ mod tests {
     #[test]
     fn pow() {
         let f1 = FieldElement::new(BigInt::from(9i8), BigInt::from(13));
-        let e = 3;
+        let e = BigInt::from(3);
         let f2 = FieldElement::new(BigInt::from(1), BigInt::from(13));
         assert_eq!(f2, f1.pow(e));
     }
@@ -113,7 +113,7 @@ mod tests {
     #[test]
     fn pow_neg() {
         let f1 = FieldElement::new(BigInt::from(3), BigInt::from(13));
-        let e = -9;
+        let e = BigInt::from(-9);
         let f2 = FieldElement::new(BigInt::from(1), BigInt::from(13));
         assert_eq!(f2, f1.pow(e));
     }

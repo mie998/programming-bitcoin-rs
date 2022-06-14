@@ -1,20 +1,20 @@
-use super::field_element::FieldElement as FE;
+use super::field_element::{FieldElement as FE, P};
 use impl_ops::*;
 use num_bigint::BigInt;
-use num_traits::{ToPrimitive, Zero};
+use num_traits::{One, ToPrimitive, Zero};
 use std::ops;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Point {
-    x: Option<FE>,
-    y: Option<FE>,
-    a: FE,
-    b: FE,
+    pub x: Option<FE>,
+    pub y: Option<FE>,
+    pub a: FE,
+    pub b: FE,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct N {
-    value: BigInt,
+    pub value: BigInt,
 }
 
 impl Point {
@@ -27,7 +27,9 @@ impl Point {
                 b,
             },
             (Some(x), Some(y)) => {
-                if y.clone().pow(2) != x.clone().pow(3) + &a * x + &b {
+                if y.clone().pow(BigInt::from(2u8))
+                    != x.clone().pow(BigInt::from(3u8)) + &a * x + &b
+                {
                     panic!("Points {:?} {:?} are not on the curve!", x, y);
                 };
                 Point {
@@ -54,30 +56,30 @@ impl Point {
         Self::new_s256(Some(x), Some(y))
     }
 
-    pub fn rmul(self, coefficient: usize) -> Self {
+    pub fn rmul(self, coefficient: BigInt) -> Self {
         let mut coef = coefficient.clone();
         let mut current = self.clone();
         let mut result = Self::new(None, None, self.a, self.b);
-        while coef > 0 {
-            if coef & 1 == 1 {
+
+        while coef > BigInt::zero() {
+            if &coef % BigInt::from(2u8) == BigInt::one() {
                 result = &result + &current;
             };
             current = &current + &current;
-            coef >>= 1
+            coef /= BigInt::from(2u8);
         }
+
         return result;
     }
 
-    pub fn rmul_s256(self, coefficient: usize) -> Self {
-        let p: BigInt =
-            (BigInt::from(2u32)).pow(256) - (BigInt::from(2u32)).pow(32) - BigInt::from(977);
+    pub fn rmul_s256(self, coefficient: BigInt) -> Self {
+        let p = P::new().value;
         if self.a.prime != p {
             panic!("This method shouldn't be used with this prime value.")
         }
 
         let n = N::new().value;
-        // !TODO coefficient が usize なので n で mod 演算を取る意味があまりない。
-        Self::rmul(self, coefficient)
+        Self::rmul(self, coefficient % n)
     }
 }
 
@@ -94,8 +96,8 @@ impl_ops::impl_op_ex!(+ |p1: &Point, p2: &Point| -> Point{
                 return Point::new(None, None, p1.a.clone(), p1.b.clone());
             } else {
                 let p = &p1_x.prime;
-                let s = (FE::new(BigInt::from(3u8), p.clone()) * p1_x.clone().pow(2) + &p1.a) / (FE::new(BigInt::from(2u8), p.clone()) * p1_y);
-                let x = s.clone().pow(2) - FE::new(BigInt::from(2u8), p.clone()) * p1_x;
+                let s = (FE::new(BigInt::from(3u8), p.clone()) * p1_x.clone().pow(BigInt::from(2u8)) + &p1.a) / (FE::new(BigInt::from(2u8), p.clone()) * p1_y);
+                let x = s.clone().pow(BigInt::from(2u8)) - FE::new(BigInt::from(2u8), p.clone()) * p1_x;
                 let y = s * (p1_x - x.clone()) - p1_y;
                 return Point::new(Some(x), Some(y), p1.a.clone(), p1.b.clone());
             }
@@ -111,7 +113,7 @@ impl_ops::impl_op_ex!(+ |p1: &Point, p2: &Point| -> Point{
                 } else {
                     let (p1_y, p2_y) = (p1.y.as_ref().unwrap(), p2.y.as_ref().unwrap());
                     let s = (p2_y - p1_y) / (p2_x - p1_x);
-                    let x = s.clone().pow(2) - p1_x - p2_x;
+                    let x = s.clone().pow(BigInt::from(2u8)) - p1_x - p2_x;
                     let y = s * (p1_x - x.clone()) - p1_y;
                     Point::new(Some(x), Some(y), p1.a.clone(), p1.b.clone())
                 }
@@ -162,7 +164,7 @@ mod tests {
         let p = Point::new(x, y, a, b);
         let mut v: Vec<(usize, usize)> = vec![];
         for i in 1..6 {
-            let result = p.clone().rmul(i);
+            let result = p.clone().rmul(BigInt::from(i));
             v.push((
                 result.x.unwrap().num.to_usize().unwrap(),
                 result.y.unwrap().num.to_usize().unwrap(),
