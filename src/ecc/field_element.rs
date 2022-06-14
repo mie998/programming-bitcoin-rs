@@ -9,6 +9,11 @@ pub struct FieldElement {
     pub prime: BigInt,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct P {
+    value: BigInt,
+}
+
 impl FieldElement {
     pub fn new(num: BigInt, prime: BigInt) -> Self {
         if prime < BigInt::from(2u8) {
@@ -19,6 +24,11 @@ impl FieldElement {
             num: num % &prime,
             prime,
         }
+    }
+
+    pub fn new_s256(num: BigInt) -> Self {
+        let p = P::new().value;
+        Self { num, prime: p }
     }
 
     pub fn pow(self, exponent: i32) -> Self {
@@ -79,6 +89,14 @@ impl_ops::impl_op_ex!(/ |a: &FieldElement, b: &FieldElement| -> FieldElement {
     let num = (&a.num * b_inverse.num) % prime;
     return FieldElement::new(num, a.prime.clone());
 });
+
+impl P {
+    fn new() -> Self {
+        let p: BigInt =
+            (BigInt::from(2u32)).pow(256) - (BigInt::from(2u32)).pow(32) - BigInt::from(977);
+        Self { value: p }
+    }
+}
 
 #[cfg(test)]
 mod tests {

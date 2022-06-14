@@ -12,6 +12,11 @@ pub struct Point {
     b: FE,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct N {
+    value: BigInt,
+}
+
 impl Point {
     pub fn new(x: Option<FE>, y: Option<FE>, a: FE, b: FE) -> Point {
         match (&x, &y) {
@@ -35,6 +40,20 @@ impl Point {
         }
     }
 
+    pub fn new_s256(x: Option<FE>, y: Option<FE>) -> Self {
+        let a = FE::new_s256(BigInt::zero());
+        let b = FE::new_s256(BigInt::from(7u8));
+        Self::new(x, y, a, b)
+    }
+
+    pub fn new_g() -> Self {
+        let bytes_x = b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";
+        let bytes_y = b"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8";
+        let x = FE::new_s256(BigInt::parse_bytes(bytes_x, 16).unwrap());
+        let y = FE::new_s256(BigInt::parse_bytes(bytes_y, 16).unwrap());
+        Self::new_s256(Some(x), Some(y))
+    }
+
     pub fn rmul(self, coefficient: usize) -> Self {
         let mut coef = coefficient.clone();
         let mut current = self.clone();
@@ -47,6 +66,18 @@ impl Point {
             coef >>= 1
         }
         return result;
+    }
+
+    pub fn rmul_s256(self, coefficient: usize) -> Self {
+        let p: BigInt =
+            (BigInt::from(2u32)).pow(256) - (BigInt::from(2u32)).pow(32) - BigInt::from(977);
+        if self.a.prime != p {
+            panic!("This method shouldn't be used with this prime value.")
+        }
+
+        let n = N::new().value;
+        // !TODO coefficient が usize なので n で mod 演算を取る意味があまりない。
+        Self::rmul(self, coefficient)
     }
 }
 
@@ -87,6 +118,14 @@ impl_ops::impl_op_ex!(+ |p1: &Point, p2: &Point| -> Point{
             }
         }
 });
+
+impl N {
+    pub fn new() -> Self {
+        let bytes_n = b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141";
+        let n = BigInt::parse_bytes(bytes_n, 16).unwrap();
+        Self { value: n }
+    }
+}
 
 #[cfg(test)]
 mod tests {
