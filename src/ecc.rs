@@ -1,3 +1,2 @@
-mod field_element;
-mod point;
-// mod secp256k1;
+pub mod field_element;
+pub mod point;
