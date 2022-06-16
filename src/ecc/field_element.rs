@@ -44,6 +44,10 @@ impl FieldElement {
         }
         return current;
     }
+
+    pub fn rmul(self, r: BigInt) -> Self {
+        Self::new(self.num * r, self.prime)
+    }
 }
 
 impl_ops::impl_op_ex!(+ |a: &FieldElement, b: &FieldElement| -> FieldElement {
@@ -148,6 +152,14 @@ mod tests {
         let f2 = FieldElement::new(BigInt::from(4), BigInt::from(13));
         let f3 = FieldElement::new(BigInt::from(12), BigInt::from(13));
         assert_eq!(f1 * f2, f3);
+    }
+
+    #[test]
+    fn rmul() {
+        let f1 = FieldElement::new(BigInt::from(3), BigInt::from(13));
+        let f2 = BigInt::from(5);
+        let f3 = FieldElement::new(BigInt::from(2), BigInt::from(13));
+        assert_eq!(f1.rmul(f2), f3);
     }
 
     #[test]

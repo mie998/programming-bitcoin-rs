@@ -5,8 +5,8 @@ use num_traits::{One, Zero};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Signature {
-    r: BigInt,
-    s: BigInt,
+    pub r: BigInt,
+    pub s: BigInt,
 }
 
 impl Signature {

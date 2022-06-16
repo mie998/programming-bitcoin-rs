@@ -1,3 +1,5 @@
+use crate::security::signature::Signature;
+
 use super::field_element::{FieldElement as FE, P};
 use impl_ops::*;
 use num_bigint::BigInt;
@@ -81,10 +83,21 @@ impl Point {
         let n = N::new().value;
         Self::rmul(self, coefficient % n)
     }
+
+    pub fn verify(self, z: BigInt, sig: Signature) -> bool {
+        let n = N::new().value;
+        let s = FE::new(sig.s, n.clone());
+        let s_inv = FE::pow(s, n - BigInt::from(2u8));
+        let u = &s_inv.clone().rmul(z);
+        let v = &s_inv.clone().rmul(sig.r.clone());
+        let total = Self::new_g().rmul(u.num.clone()) + self.rmul(v.num.clone());
+
+        return total.x.unwrap().num == sig.r;
+    }
 }
 
 impl_ops::impl_op_ex!(+ |p1: &Point, p2: &Point| -> Point{
-        // case: Points are not on the same curve
+        // case: Points are n qot on the same curve
         if p1.a != p2.a || p1.b != p2.b {
             panic!("Points {:?} {:?} are not on the same curve!", p1, p2);
         };
