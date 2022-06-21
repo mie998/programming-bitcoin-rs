@@ -50,6 +50,14 @@ impl Point {
         Self::new(x, y, a, b)
     }
 
+    pub fn new_u64_s256(x: u64, y: u64) -> Self {
+        let a = FE::new_s256(BigInt::zero());
+        let b = FE::new_s256(BigInt::from(7u8));
+        let xf = FE::new_s256(BigInt::from(x));
+        let yf = FE::new_s256(BigInt::from(y));
+        Self::new(Some(xf), Some(yf), a, b)
+    }
+
     pub fn new_g() -> Self {
         let bytes_x = b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";
         let bytes_y = b"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8";
@@ -85,6 +93,10 @@ impl Point {
     }
 
     pub fn verify(self, z: BigInt, sig: Signature) -> bool {
+        if self.a.prime != P::new().value {
+            panic!("This FieldElement is not acceptable for point::verify method.")
+        }
+
         let n = N::new().value;
         let s = FE::new(sig.s, n.clone());
         let s_inv = FE::pow(s, n - BigInt::from(2u8));
