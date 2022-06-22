@@ -64,13 +64,19 @@ impl S256Point {
     }
 
     pub fn rmul(self, coefficient: BigInt) -> Self {
-        let p = self.x.clone().unwrap().prime;
-        if self.a.prime != p {
-            panic!("This method shouldn't be used with this prime value.")
+        let mut coef = coefficient.clone() % self.n.clone();
+        let mut current = self.clone();
+        let mut result = Self::new(None, None);
+
+        while coef > BigInt::zero() {
+            if &coef % BigInt::from(2u8) == BigInt::one() {
+                result = &result + &current;
+            };
+            current = &current + &current;
+            coef /= BigInt::from(2u8);
         }
 
-        let n = self.n.clone();
-        Self::rmul(self, coefficient % n)
+        return result;
     }
 
     pub fn verify(self, z: BigInt, sig: Signature) -> bool {
@@ -97,7 +103,6 @@ impl_ops::impl_op_ex!(+ |p1: &S256Point, p2: &S256Point| -> S256Point{
             if p1_x.clone() == S256Field::new(BigInt::zero()) * p1_y {
                 return S256Point::new(None, None);
             } else {
-                let p = &p1_x.prime;
                 let s = (S256Field::new(BigInt::from(3u8)) * p1_x.clone().pow(BigInt::from(2u8)) + &p1.a) / (S256Field::new(BigInt::from(2u8)) * p1_y);
                 let x = s.clone().pow(BigInt::from(2u8)) - S256Field::new(BigInt::from(2u8)) * p1_x;
                 let y = s * (p1_x - x.clone()) - p1_y;

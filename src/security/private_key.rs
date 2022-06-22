@@ -52,7 +52,6 @@ impl PrivateKey {
 mod tests {
     use super::*;
 
-    // !TODO: overflow が発生する
     #[test]
     fn hex_test() {
         let b = BigInt::from(8u8);
