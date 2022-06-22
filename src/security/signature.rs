@@ -1,5 +1,5 @@
-use crate::ecc::field_element::FieldElement;
-use crate::ecc::point::{Point, N};
+use crate::ecc::s256_field::S256Field;
+use crate::ecc::s256_point::S256Point;
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 
@@ -28,11 +28,11 @@ mod tests {
         let bytes_s = b"8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec";
         let s = BigInt::parse_bytes(bytes_s, 16).unwrap();
         let bytes_px = b"04519fac3d910ca7e7138f7013706f619fa8f033e6ec6e09370ea38cee6a7574";
-        let px = FieldElement::new_s256(BigInt::parse_bytes(bytes_px, 16).unwrap());
+        let px = S256Field::new(BigInt::parse_bytes(bytes_px, 16).unwrap());
         let bytes_py = b"82b51eab8c27c66e26c858a079bcdf4f1ada34cec420cafc7eac1a42216fb6c4";
-        let py = FieldElement::new_s256(BigInt::parse_bytes(bytes_py, 16).unwrap());
+        let py = S256Field::new(BigInt::parse_bytes(bytes_py, 16).unwrap());
 
-        let point = Point::new_s256(Some(px), Some(py));
+        let point = S256Point::new(Some(px), Some(py));
         assert_eq!(true, point.verify(z, Signature::new(r, s)))
     }
 
@@ -45,11 +45,11 @@ mod tests {
         let bytes_s = b"68342ceff8935ededd102dd876ffd6ba72d6a427a3edb13d26eb0781cb423c4";
         let s = BigInt::parse_bytes(bytes_s, 16).unwrap();
         let bytes_px = b"887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c";
-        let px = FieldElement::new_s256(BigInt::parse_bytes(bytes_px, 16).unwrap());
+        let px = S256Field::new(BigInt::parse_bytes(bytes_px, 16).unwrap());
         let bytes_py = b"61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34";
-        let py = FieldElement::new_s256(BigInt::parse_bytes(bytes_py, 16).unwrap());
+        let py = S256Field::new(BigInt::parse_bytes(bytes_py, 16).unwrap());
 
-        let point = Point::new_s256(Some(px), Some(py));
+        let point = S256Point::new(Some(px), Some(py));
         assert_eq!(true, point.verify(z, Signature::new(r, s)))
     }
 
@@ -62,11 +62,11 @@ mod tests {
         let bytes_s = b"c7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6";
         let s = BigInt::parse_bytes(bytes_s, 16).unwrap();
         let bytes_px = b"887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c";
-        let px = FieldElement::new_s256(BigInt::parse_bytes(bytes_px, 16).unwrap());
+        let px = S256Field::new(BigInt::parse_bytes(bytes_px, 16).unwrap());
         let bytes_py = b"61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34";
-        let py = FieldElement::new_s256(BigInt::parse_bytes(bytes_py, 16).unwrap());
+        let py = S256Field::new(BigInt::parse_bytes(bytes_py, 16).unwrap());
 
-        let point = Point::new_s256(Some(px), Some(py));
+        let point = S256Point::new(Some(px), Some(py));
         assert_eq!(true, point.verify(z, Signature::new(r, s)))
     }
 }

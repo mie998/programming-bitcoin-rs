@@ -1,6 +1,6 @@
 use crate::security::signature::Signature;
 
-use super::field_element::{FieldElement as FE, P};
+use super::field_element::FieldElement as FE;
 use impl_ops::*;
 use num_bigint::BigInt;
 use num_traits::{One, ToPrimitive, Zero};
@@ -33,7 +33,7 @@ impl Point {
                     != x.clone().pow(BigInt::from(3u8)) + &a * x + &b
                 {
                     panic!("Points {:?} {:?} are not on the curve!", x, y);
-                };
+                }
                 Point {
                     x: Some(x.clone()),
                     y: Some(y.clone()),
@@ -42,28 +42,6 @@ impl Point {
                 }
             }
         }
-    }
-
-    pub fn new_s256(x: Option<FE>, y: Option<FE>) -> Self {
-        let a = FE::new_s256(BigInt::zero());
-        let b = FE::new_s256(BigInt::from(7u8));
-        Self::new(x, y, a, b)
-    }
-
-    pub fn new_u64_s256(x: u64, y: u64) -> Self {
-        let a = FE::new_s256(BigInt::zero());
-        let b = FE::new_s256(BigInt::from(7u8));
-        let xf = FE::new_s256(BigInt::from(x));
-        let yf = FE::new_s256(BigInt::from(y));
-        Self::new(Some(xf), Some(yf), a, b)
-    }
-
-    pub fn new_g() -> Self {
-        let bytes_x = b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";
-        let bytes_y = b"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8";
-        let x = FE::new_s256(BigInt::parse_bytes(bytes_x, 16).unwrap());
-        let y = FE::new_s256(BigInt::parse_bytes(bytes_y, 16).unwrap());
-        Self::new_s256(Some(x), Some(y))
     }
 
     pub fn rmul(self, coefficient: BigInt) -> Self {
@@ -80,31 +58,6 @@ impl Point {
         }
 
         return result;
-    }
-
-    pub fn rmul_s256(self, coefficient: BigInt) -> Self {
-        let p = P::new().value;
-        if self.a.prime != p {
-            panic!("This method shouldn't be used with this prime value.")
-        }
-
-        let n = N::new().value;
-        Self::rmul(self, coefficient % n)
-    }
-
-    pub fn verify(self, z: BigInt, sig: Signature) -> bool {
-        if self.a.prime != P::new().value {
-            panic!("This FieldElement is not acceptable for point::verify method.")
-        }
-
-        let n = N::new().value;
-        let s = FE::new(sig.s, n.clone());
-        let s_inv = FE::pow(s, n - BigInt::from(2u8));
-        let u = &s_inv.clone().rmul(z);
-        let v = &s_inv.clone().rmul(sig.r.clone());
-        let total = Self::new_g().rmul(u.num.clone()) + self.rmul(v.num.clone());
-
-        return total.x.unwrap().num == sig.r;
     }
 }
 
