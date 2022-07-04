@@ -3,9 +3,9 @@ use crate::security::signature::Signature;
 use super::field_element::FieldElement;
 use super::s256_field::S256Field;
 use impl_ops::*;
-use num_bigint::BigInt;
-use num_traits::{One, ToPrimitive, Zero};
-use std::ops::{self, BitAnd};
+use num_bigint::{BigInt, Sign};
+use num_traits::{One, Zero};
+use std::ops::{self};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct S256Point {
@@ -47,13 +47,11 @@ impl S256Point {
         }
     }
 
-    // pub fn new_u64_s256(x: u64, y: u64) -> Self {
-    //     let a = FE::new_s256(BigInt::zero());
-    //     let b = FE::new_s256(BigInt::from(7u8));
-    //     let xf = FE::new_s256(BigInt::from(x));
-    //     let yf = FE::new_s256(BigInt::from(y));
-    //     Self::new(Some(xf), Some(yf), a, b)
-    // }
+    pub fn new_u64(x: u64, y: u64) -> Self {
+        let xf = S256Field::new(BigInt::from(x));
+        let yf = S256Field::new(BigInt::from(y));
+        Self::new(Some(xf), Some(yf))
+    }
 
     pub fn new_g() -> Self {
         let bytes_x = b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798";
@@ -88,6 +86,53 @@ impl S256Point {
         let total = Self::new_g().rmul(u.num.clone()) + self.rmul(v.num.clone());
 
         return total.x.unwrap().num == sig.r;
+    }
+
+    pub fn sec(self, compress: bool) -> Vec<u8> {
+        // !TODO: 以下の実装だと符号情報 Sign が落ちる。でも、符号情報を扱うと bit数が増えるのでどうしたものか、、、
+        // !TODO: 32byte に満たない数の場合は左に zero padding しているが、いいのだろうか。
+        if compress {
+            let (_, vec_x) = self.x.unwrap().num.to_bytes_be();
+            let x_coordinate = [vec![0u8; 32 - vec_x.len()], vec_x].concat();
+            let marker = if self.y.unwrap().num % BigInt::from(2u8) == BigInt::from(0u8) {
+                vec![0u8, 2u8]
+            } else {
+                vec![0u8, 3u8]
+            };
+
+            [marker, x_coordinate].concat()
+        } else {
+            let (_, vec_x) = self.x.unwrap().num.to_bytes_be();
+            let x_coordinate = [vec![0u8; 32 - vec_x.len()], vec_x].concat();
+            let (_, vec_y) = self.y.unwrap().num.to_bytes_be();
+            let y_coordinate = [vec![0u8; 32 - vec_y.len()], vec_y].concat();
+            let marker = vec![0u8, 4u8];
+
+            [marker, x_coordinate, y_coordinate].concat()
+        }
+    }
+
+    pub fn parse(self, sec_bin: Vec<u8>) -> Self {
+        if sec_bin[0] == 4 {
+            let x = BigInt::from_bytes_be(Sign::Plus, &sec_bin[1..33]);
+            let y = BigInt::from_bytes_be(Sign::Plus, &sec_bin[33..65]);
+            return Self::new(Some(S256Field::new(x)), Some(S256Field::new(y)));
+        } else {
+            let is_even = sec_bin[0] == 2;
+            let x = S256Field::new(BigInt::from_bytes_be(Sign::Plus, &sec_bin[1..]));
+            // get the answer of formular y^2 = x^3 + 7
+            let alpha = &x * &x * &x + S256Field::new(self.b.num);
+            let beta = alpha.sqrt();
+            match (&beta.num % BigInt::from(2u8) == BigInt::from(0u8), is_even) {
+                (true, true) | (false, false) => {
+                    Self::new(Some(S256Field::new(x.num)), Some(S256Field::new(beta.num)))
+                }
+                (true, false) | (false, true) => Self::new(
+                    Some(S256Field::new(x.num)),
+                    Some(S256Field::new(beta.prime - beta.num)),
+                ),
+            }
+        }
     }
 }
 

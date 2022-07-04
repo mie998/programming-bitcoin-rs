@@ -35,6 +35,11 @@ impl S256Field {
     pub fn rmul(self, r: BigInt) -> Self {
         Self::new(self.num * r)
     }
+
+    pub fn sqrt(self) -> Self {
+        let p = self.prime.clone();
+        return self.rmul((p + 1) / 4);
+    }
 }
 
 impl_ops::impl_op_ex!(+ |a: &S256Field, b: &S256Field| -> S256Field {
