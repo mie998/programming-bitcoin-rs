@@ -6,7 +6,7 @@ use num_traits::{One, Zero};
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PrivateKey {
     secret: BigInt,
-    point: S256Point,
+    pub point: S256Point,
 }
 
 impl PrivateKey {

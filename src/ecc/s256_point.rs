@@ -88,27 +88,44 @@ impl S256Point {
         return total.x.unwrap().num == sig.r;
     }
 
-    pub fn sec(self, compress: bool) -> Vec<u8> {
+    pub fn sec_str(self, compress: bool) -> String {
         // !TODO: 以下の実装だと符号情報 Sign が落ちる。でも、符号情報を扱うと bit数が増えるのでどうしたものか、、、
         // !TODO: 32byte に満たない数の場合は左に zero padding しているが、いいのだろうか。
         if compress {
-            let (_, vec_x) = self.x.unwrap().num.to_bytes_be();
-            let x_coordinate = [vec![0u8; 32 - vec_x.len()], vec_x].concat();
+            let (_, vec_x) = self.x.unwrap().num.to_radix_be(16);
+            let x_coordinate = vec_x
+                .iter()
+                .map(|x| char::from_digit(*x as u32, 16).unwrap())
+                .collect::<String>();
+            let x_coordinate_padding = format!("{:0>32}", x_coordinate);
+
             let marker = if self.y.unwrap().num % BigInt::from(2u8) == BigInt::from(0u8) {
-                vec![0u8, 2u8]
+                String::from("02")
             } else {
-                vec![0u8, 3u8]
+                String::from("03")
             };
 
-            [marker, x_coordinate].concat()
+            marker + &x_coordinate_padding
         } else {
-            let (_, vec_x) = self.x.unwrap().num.to_bytes_be();
-            let x_coordinate = [vec![0u8; 32 - vec_x.len()], vec_x].concat();
-            let (_, vec_y) = self.y.unwrap().num.to_bytes_be();
-            let y_coordinate = [vec![0u8; 32 - vec_y.len()], vec_y].concat();
-            let marker = vec![0u8, 4u8];
+            let (_, vec_x) = self.x.unwrap().num.to_radix_be(16);
+            let x_coordinate = vec_x
+                .iter()
+                .map(|x| char::from_digit(*x as u32, 16).unwrap())
+                .collect::<String>();
+            // 32 byte (string.len = 64) になるまで 左に zero-padding
+            let x_coordinate_padding = format!("{:0>64}", x_coordinate);
 
-            [marker, x_coordinate, y_coordinate].concat()
+            let (_, vec_y) = self.y.unwrap().num.to_radix_be(16);
+            let y_coordinate = vec_y
+                .iter()
+                .map(|y| char::from_digit(*y as u32, 16).unwrap())
+                .collect::<String>();
+            // 32 byte (string.len = 64) になるまで 左に zero-padding
+            let y_coordinate_padding = format!("{:0>64}", y_coordinate);
+
+            let marker = String::from("04");
+
+            marker + &x_coordinate_padding + &y_coordinate_padding
         }
     }
 
@@ -172,3 +189,40 @@ impl_ops::impl_op_ex!(+ |p1: &S256Point, p2: &S256Point| -> S256Point{
             }
         }
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::security::private_key::PrivateKey;
+
+    #[test]
+    fn sec_str_not_compressed1() {
+        let prv = PrivateKey::new(BigInt::from(5000u32));
+        let s = prv.point.sec_str(false);
+        assert_eq!(
+            s,
+            "04ffe558e388852f0120e46af2d1b370f85854a8eb0841811ece0e3e03d282d57c315dc72890a4f10a1481c031b03b351b0dc79901ca18a00cf009dbdb157a1d10"
+        );
+    }
+
+    #[test]
+    fn sec_str_not_compressed2() {
+        let prv = PrivateKey::new(BigInt::from(2018).pow(5));
+        let s = prv.point.sec_str(false);
+        assert_eq!(
+            s,
+            "04027f3da1918455e03c46f659266a1bb5204e959db7364d2f473bdf8f0a13cc9dff87647fd023c13b4a4994f17691895806e1b40b57f4fd22581a4f46851f3b06"
+        );
+    }
+
+    #[test]
+    fn sec_str_not_compressed3() {
+        let key = b"deadbeef12345";
+        let prv = PrivateKey::new(BigInt::parse_bytes(key, 16).unwrap());
+        let s = prv.point.sec_str(false);
+        assert_eq!(
+            s,
+            "04d90cd625ee87dd38656dd95cf79f65f60f7273b67d3096e68bd81e4f5342691f842efa762fd59961d0e99803c61edba8b3e3f7dc3a341836f97733aebf987121"
+        );
+    }
+}
