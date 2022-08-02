@@ -13,6 +13,8 @@ impl Signature {
     pub fn new(r: BigInt, s: BigInt) -> Self {
         Self { r, s }
     }
+
+    pub fn der(&self) -> 
 }
 
 #[cfg(test)]

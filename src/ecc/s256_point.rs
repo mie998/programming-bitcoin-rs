@@ -130,6 +130,7 @@ impl S256Point {
     }
 
     pub fn parse(self, sec_bin: Vec<u8>) -> Self {
+        // return Point from SEC binary (not 16 bigit)
         if sec_bin[0] == 4 {
             let x = BigInt::from_bytes_be(Sign::Plus, &sec_bin[1..33]);
             let y = BigInt::from_bytes_be(Sign::Plus, &sec_bin[33..65]);
