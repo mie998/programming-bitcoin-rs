@@ -14,7 +14,21 @@ impl Signature {
         Self { r, s }
     }
 
-    pub fn der(&self) -> 
+    // !TODO: 工事中
+    // pub fn der(&self) -> Vec<u8> {
+    //     let (sign, rbin) = self.r.to_bytes_be();
+    //     // remove all null bytes from rbin head
+    //     for s in rbin {
+    //         if s != b'\x00' {
+    //             break;
+    //         }
+    //         rbin.remove(0);
+    //     }
+    //     if rbin.first().unwrap() {
+    //         rbin.insert(0, b'\x00');
+    //     }
+    //     return rbin;
+    // }
 }
 
 #[cfg(test)]

@@ -5,7 +5,10 @@ use super::s256_field::S256Field;
 use impl_ops::*;
 use num_bigint::{BigInt, Sign};
 use num_traits::{One, Zero};
-use std::ops::{self};
+use std::{
+    ops::{self},
+    vec,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct S256Point {
@@ -88,44 +91,65 @@ impl S256Point {
         return total.x.unwrap().num == sig.r;
     }
 
-    pub fn sec_str(self, compress: bool) -> String {
+    pub fn sec(self, compress: bool) -> Vec<u8> {
         // !TODO: 以下の実装だと符号情報 Sign が落ちる。でも、符号情報を扱うと bit数が増えるのでどうしたものか、、、
-        // !TODO: 32byte に満たない数の場合は左に zero padding しているが、いいのだろうか。
         if compress {
-            let (_, vec_x) = self.x.unwrap().num.to_radix_be(16);
-            let x_coordinate = vec_x
-                .iter()
-                .map(|x| char::from_digit(*x as u32, 16).unwrap())
-                .collect::<String>();
-            let x_coordinate_padding = format!("{:0>32}", x_coordinate);
+            let (_, vec_x) = self.x.unwrap().num.to_bytes_be();
+            if vec_x.len() > 32 {
+                if vec_x.len() > 32 {
+                    panic!(
+                        "This number is too large for sec format. Vector size is: {:?}",
+                        vec_x.len()
+                    );
+                }
+            }
+            // 32 byte (vec.len = 32) になるまで 左に zero-padding
+            let diff = 32 - vec_x.len();
+            let mut vec_x_with_padding = std::iter::repeat(0x0).take(diff).collect::<Vec<u8>>();
+            vec_x_with_padding.extend(vec_x);
 
             let marker = if self.y.unwrap().num % BigInt::from(2u8) == BigInt::from(0u8) {
-                String::from("02")
+                b"02"
             } else {
-                String::from("03")
+                b"03"
             };
 
-            marker + &x_coordinate_padding
+            let mut result = Vec::new();
+            result.extend(marker);
+            result.extend(vec_x_with_padding);
+
+            result
         } else {
-            let (_, vec_x) = self.x.unwrap().num.to_radix_be(16);
-            let x_coordinate = vec_x
-                .iter()
-                .map(|x| char::from_digit(*x as u32, 16).unwrap())
-                .collect::<String>();
-            // 32 byte (string.len = 64) になるまで 左に zero-padding
-            let x_coordinate_padding = format!("{:0>64}", x_coordinate);
+            let (_, vec_x) = self.x.unwrap().num.to_bytes_be();
+            if vec_x.len() > 32 {
+                panic!(
+                    "This number is too large for sec format. Vector size is: {:?}",
+                    vec_x.len()
+                );
+            }
+            let diff_x = 32 - vec_x.len();
+            // 32 byte (vec.len = 32) になるまで 左に zero-padding
+            let mut vec_x_with_padding = std::iter::repeat(0x0).take(diff_x).collect::<Vec<u8>>();
+            vec_x_with_padding.extend(vec_x);
 
-            let (_, vec_y) = self.y.unwrap().num.to_radix_be(16);
-            let y_coordinate = vec_y
-                .iter()
-                .map(|y| char::from_digit(*y as u32, 16).unwrap())
-                .collect::<String>();
-            // 32 byte (string.len = 64) になるまで 左に zero-padding
-            let y_coordinate_padding = format!("{:0>64}", y_coordinate);
+            let (_, vec_y) = self.y.unwrap().num.to_bytes_be();
+            if vec_y.len() > 32 {
+                panic!(
+                    "This number is too large for sec format. Vector size is: {:?}",
+                    vec_y.len()
+                );
+            }
+            let diff_y = 32 - vec_y.len();
+            // 32 byte (vec.len = 32) になるまで 左に zero-padding
+            let mut vec_y_with_padding = std::iter::repeat(0x0).take(diff_y).collect::<Vec<u8>>();
+            vec_y_with_padding.extend(vec_y);
 
-            let marker = String::from("04");
+            let mut result = Vec::new();
+            result.extend(b"04");
+            result.extend(vec_x_with_padding);
+            result.extend(vec_y_with_padding);
 
-            marker + &x_coordinate_padding + &y_coordinate_padding
+            result
         }
     }
 
@@ -197,33 +221,63 @@ mod tests {
     use crate::security::private_key::PrivateKey;
 
     #[test]
-    fn sec_str_not_compressed1() {
+    fn sec_not_compressed1() {
         let prv = PrivateKey::new(BigInt::from(5000u32));
-        let s = prv.point.sec_str(false);
+        let s = prv.point.sec(false);
         assert_eq!(
             s,
-            "04ffe558e388852f0120e46af2d1b370f85854a8eb0841811ece0e3e03d282d57c315dc72890a4f10a1481c031b03b351b0dc79901ca18a00cf009dbdb157a1d10"
+            b"04ffe558e388852f0120e46af2d1b370f85854a8eb0841811ece0e3e03d282d57c315dc72890a4f10a1481c031b03b351b0dc79901ca18a00cf009dbdb157a1d10"
         );
     }
 
     #[test]
-    fn sec_str_not_compressed2() {
+    fn sec_not_compressed2() {
         let prv = PrivateKey::new(BigInt::from(2018).pow(5));
-        let s = prv.point.sec_str(false);
+        let s = prv.point.sec(false);
         assert_eq!(
             s,
-            "04027f3da1918455e03c46f659266a1bb5204e959db7364d2f473bdf8f0a13cc9dff87647fd023c13b4a4994f17691895806e1b40b57f4fd22581a4f46851f3b06"
+            b"04027f3da1918455e03c46f659266a1bb5204e959db7364d2f473bdf8f0a13cc9dff87647fd023c13b4a4994f17691895806e1b40b57f4fd22581a4f46851f3b06"
         );
     }
 
     #[test]
-    fn sec_str_not_compressed3() {
+    fn sec_not_compressed3() {
         let key = b"deadbeef12345";
         let prv = PrivateKey::new(BigInt::parse_bytes(key, 16).unwrap());
-        let s = prv.point.sec_str(false);
+        let s = prv.point.sec(false);
         assert_eq!(
             s,
-            "04d90cd625ee87dd38656dd95cf79f65f60f7273b67d3096e68bd81e4f5342691f842efa762fd59961d0e99803c61edba8b3e3f7dc3a341836f97733aebf987121"
+            b"04d90cd625ee87dd38656dd95cf79f65f60f7273b67d3096e68bd81e4f5342691f842efa762fd59961d0e99803c61edba8b3e3f7dc3a341836f97733aebf987121"
+        );
+    }
+    #[test]
+    fn sec_compressed1() {
+        let prv = PrivateKey::new(BigInt::from(5001u32));
+        let s = prv.point.sec(true);
+        assert_eq!(
+            s,
+            b"0357a4f368868a8a6d572991e484e664810ff14c05c0fa023275251151fe0e53d1"
+        );
+    }
+
+    #[test]
+    fn sec_compressed2() {
+        let prv = PrivateKey::new(BigInt::from(2019).pow(5));
+        let s = prv.point.sec(true);
+        assert_eq!(
+            s,
+            b"02933ec2d2b111b92737ec12f1c5d20f3233a0ad21cd8b36d0bca7a0cfa5cb8701"
+        );
+    }
+
+    #[test]
+    fn sec_compressed3() {
+        let key = b"deadbeef54321";
+        let prv = PrivateKey::new(BigInt::parse_bytes(key, 16).unwrap());
+        let s = prv.point.sec(true);
+        assert_eq!(
+            s,
+            b"0296be5b1292f6c856b3c5654e886fc13511462059089cdf9c479623bfcbe77690"
         );
     }
 }
