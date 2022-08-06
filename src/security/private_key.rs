@@ -1,7 +1,7 @@
 use super::signature::Signature;
 use crate::ecc::s256_point::S256Point;
 use num_bigint::{BigInt, RandBigInt};
-use num_traits::{One, Zero};
+use num_traits::Zero;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct PrivateKey {

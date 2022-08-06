@@ -1,8 +1,7 @@
-use crate::security::signature::Signature;
-
 use super::field_element::FieldElement as FE;
 use impl_ops::*;
 use num_bigint::BigInt;
+#[allow(unused_imports)]
 use num_traits::{One, ToPrimitive, Zero};
 use std::ops;
 
