@@ -1,3 +1,11 @@
+use super::hash256::hash256;
+use bs58;
+pub fn encode_base58_checksum(byte: &[u8]) -> String {
+    let mut bytes = byte.to_vec();
+    bytes.extend(&hash256(&byte)[..4]);
+    bs58::encode(bytes).into_string()
+}
+
 #[cfg(test)]
 mod tests {
     use bs58::encode;

@@ -2,6 +2,7 @@ use crate::security::signature::Signature;
 
 use super::field_element::FieldElement;
 use super::s256_field::S256Field;
+use crate::util::{base58, hash160};
 use impl_ops::*;
 use num_bigint::{BigInt, Sign};
 use num_traits::{One, Zero};
@@ -153,6 +154,17 @@ impl S256Point {
             }
         }
     }
+
+    pub fn hash160(self, compressed: bool) -> Vec<u8> {
+        hash160::hash160(&self.sec(compressed))
+    }
+
+    pub fn address(self, compressed: bool, testnet: bool) -> String {
+        let mut h160 = self.hash160(compressed);
+        let prefix = if testnet { 0x6f } else { 0x00 };
+        h160.insert(0, prefix);
+        base58::encode_base58_checksum(&h160)
+    }
 }
 
 impl_ops::impl_op_ex!(+ |p1: &S256Point, p2: &S256Point| -> S256Point{
@@ -256,6 +268,32 @@ mod tests {
         assert_eq!(
             hex(&v),
             "0296be5b1292f6c856b3c5654e886fc13511462059089cdf9c479623bfcbe77690"
+        );
+    }
+
+    #[test]
+    fn address1() {
+        let prv = PrivateKey::new(BigInt::from(5002));
+        assert_eq!(
+            prv.point.address(false, true),
+            "mmTPbXQFxboEtNRkwfh6K51jvdtHLxGeMA"
+        );
+    }
+    #[test]
+    fn address2() {
+        let prv = PrivateKey::new(BigInt::from(2020).pow(5));
+        assert_eq!(
+            prv.point.address(true, true),
+            "mopVkxp8UhXqRYbCYJsbeE1h1fiF64jcoH"
+        );
+    }
+    #[test]
+    fn address3() {
+        let key = b"12345deadbeef";
+        let prv = PrivateKey::new(BigInt::parse_bytes(key, 16).unwrap());
+        assert_eq!(
+            prv.point.address(true, false),
+            "1F1Pn2y6pDb68E5nYJJeba4TLg2U7B6KF1"
         );
     }
 }
