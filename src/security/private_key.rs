@@ -1,5 +1,7 @@
 use super::signature::Signature;
 use crate::ecc::s256_point::S256Point;
+use crate::util::base58::encode_base58_checksum;
+use bs58::encode;
 use num_bigint::{BigInt, RandBigInt};
 use num_traits::Zero;
 
@@ -16,11 +18,11 @@ impl PrivateKey {
         Self { secret, point: p }
     }
 
-    fn hex(&self) -> String {
+    pub fn hex(&self) -> String {
         return format!("{:0>64}", self.secret.to_string());
     }
 
-    fn sign(self, z: &BigInt) -> Signature {
+    pub fn sign(self, z: &BigInt) -> Signature {
         let g = S256Point::new_g();
         let n = g.n.clone();
         let mut rng = rand::thread_rng();
@@ -32,6 +34,25 @@ impl PrivateKey {
             s = &n - s;
         }
         return Signature::new(r, s);
+    }
+
+    pub fn wif(self, compressed: bool, testnet: bool) -> String {
+        let (_, mut secret_byte) = self.secret.to_bytes_be();
+        let diff = 32 - secret_byte.len();
+        for _ in 0..diff {
+            secret_byte.insert(0, 0x0);
+        }
+
+        if testnet {
+            secret_byte.insert(0, 0xef);
+        } else {
+            secret_byte.insert(0, 0x80);
+        };
+        if compressed {
+            secret_byte.push(0x01);
+        }
+
+        encode_base58_checksum(&secret_byte)
     }
 
     // !TODO: I don't figure out whether this function is needed or not
@@ -60,5 +81,31 @@ mod tests {
             pk.hex(),
             "0000000000000000000000000000000000000000000000000000000000000008"
         )
+    }
+
+    #[test]
+    fn wif_test1() {
+        let prv = PrivateKey::new(BigInt::from(5003));
+        assert_eq!(
+            prv.wif(true, true),
+            "cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN8rFTv2sfUK"
+        );
+    }
+    #[test]
+    fn wif_test2() {
+        let prv = PrivateKey::new(BigInt::from(2021).pow(5));
+        assert_eq!(
+            prv.wif(false, true),
+            "91avARGdfge8E4tZfYLoxeJ5sGBdNJQH4kvjpWAxgzczjbCwxic"
+        );
+    }
+    #[test]
+    fn wif_test3() {
+        let key = b"54321deadbeef";
+        let prv = PrivateKey::new(BigInt::parse_bytes(key, 16).unwrap());
+        assert_eq!(
+            prv.wif(true, false),
+            "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgiuQJv1h8Ytr2S53a"
+        );
     }
 }
