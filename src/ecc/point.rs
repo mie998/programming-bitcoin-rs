@@ -99,6 +99,7 @@ impl_ops::impl_op_ex!(+ |p1: &Point, p2: &Point| -> Point{
 });
 
 impl N {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         let bytes_n = b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141";
         let n = BigInt::parse_bytes(bytes_n, 16).unwrap();

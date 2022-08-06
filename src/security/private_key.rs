@@ -1,7 +1,6 @@
 use super::signature::Signature;
 use crate::ecc::s256_point::S256Point;
 use crate::util::base58::encode_base58_checksum;
-use bs58::encode;
 use num_bigint::{BigInt, RandBigInt};
 use num_traits::Zero;
 
