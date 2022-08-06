@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub fn hex(bytes: &[u8]) -> String {
     bytes
         .iter()

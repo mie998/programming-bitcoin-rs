@@ -1,7 +1,4 @@
-use crate::ecc::s256_field::S256Field;
-use crate::ecc::s256_point::S256Point;
 use num_bigint::BigInt;
-use num_traits::{One, Zero};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Signature {
@@ -71,6 +68,8 @@ impl Signature {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ecc::s256_field::S256Field;
+    use crate::ecc::s256_point::S256Point;
     use crate::util::hex::hex;
 
     #[test]
@@ -131,5 +130,40 @@ mod tests {
         let s = BigInt::parse_bytes(bytes_s, 16).unwrap();
         let sig = Signature::new(r, s);
         assert_eq!(hex(&sig.der()), "3045022037206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c60221008ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec");
+    }
+
+    // ? Is this test needed? Should place here?
+    use bs58::encode;
+    #[test]
+    fn bs58_test_1() {
+        let byte_x = b"7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d";
+        let v = BigInt::parse_bytes(byte_x, 16).unwrap();
+        let (_, s) = v.to_bytes_be();
+        assert_eq!(
+            encode(s).into_string(),
+            "9MA8fRQrT4u8Zj8ZRd6MAiiyaxb2Y1CMpvVkHQu5hVM6"
+        );
+    }
+
+    #[test]
+    fn bs58_test_2() {
+        let byte_y = b"eff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c";
+        let v = BigInt::parse_bytes(byte_y, 16).unwrap();
+        let (_, s) = v.to_bytes_be();
+        assert_eq!(
+            encode(s).into_string(),
+            "4fE3H2E6XMp4SsxtwinF7w9a34ooUrwWe4WsW1458Pd"
+        );
+    }
+
+    #[test]
+    fn bs58_test_3() {
+        let byte_z = b"c7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6";
+        let v = BigInt::parse_bytes(byte_z, 16).unwrap();
+        let (_, s) = v.to_bytes_be();
+        assert_eq!(
+            encode(s).into_string(),
+            "EQJsjkd6JaGwxrjEhfeqPenqHwrBmPQZjJGNSCHBkcF7"
+        );
     }
 }
