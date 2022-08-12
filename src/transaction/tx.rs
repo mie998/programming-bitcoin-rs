@@ -1,5 +1,5 @@
 use crate::util::reader::read;
-use crate::util::varint;
+use crate::util::varint::{self, encode_varint};
 use std::io::Read;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -7,7 +7,7 @@ pub struct Tx {
     version: u32,
     tx_ins: Vec<TxIn>,
     tx_outs: Vec<TxOut>,
-    locktime: Vec<u8>,
+    locktime: u32,
     testnet: bool,
 }
 
@@ -24,6 +24,7 @@ pub struct TxOut {
     script_pubkey: Vec<u8>,
 }
 
+// !TODO: 5.5章, 練習問題5 をテストに追加する。
 impl Tx {
     fn parse<R>(reader: R, testnet: bool) -> Self
     where
@@ -37,16 +38,37 @@ impl Tx {
         // parse Output portion
         let num_outputs = varint::read_varint(reader);
         let outputs: Vec<TxOut> = num_inputs.iter().map(|_| TxOut::parse(reader)).collect();
+        // parse Locktime portion
+        let locktime = u32::from_le_bytes(read(reader, 4).try_into().unwrap());
 
         Self {
             version,
             tx_ins: inputs,
             tx_outs: outputs,
-            locktime: None,
+            locktime,
             testnet,
         }
     }
-    fn serialize(self: &Self) -> Vec<u8> {}
+
+    fn serialize(self: &Self) -> Vec<u8> {
+        let mut result = u32::to_le_bytes(self.version).to_vec();
+        result.extend(encode_varint(self.tx_ins.len()).unwrap());
+        result.extend(
+            self.tx_ins
+                .iter()
+                .flat_map(|tx_in| tx_in.serialize())
+                .collect::<Vec<u8>>(),
+        );
+        result.extend(encode_varint(self.tx_outs.len()).unwrap());
+        result.extend(
+            self.tx_outs
+                .iter()
+                .flat_map(|tx_out| tx_out.serialize())
+                .collect::<Vec<u8>>(),
+        );
+        result.extend(u32::to_le_bytes(self.locktime).to_vec());
+        result
+    }
 }
 
 impl TxIn {
@@ -66,7 +88,14 @@ impl TxIn {
             sequence,
         }
     }
-    fn serialize(self: &Self) -> Vec<u8> {}
+
+    fn serialize(self: &Self) -> Vec<u8> {
+        let mut result: Vec<u8> = self.prev_tx.into_iter().rev().collect();
+        result.extend(u32::to_le_bytes(self.prev_index));
+        result.extend(self.script_sig.serialize());
+        result.extend(u32::to_le_bytes(self.sequence));
+        result
+    }
 }
 
 impl TxOut {
@@ -82,5 +111,10 @@ impl TxOut {
             script_pubkey,
         }
     }
-    fn serialize(self: &Self) -> Vec<u8> {}
+
+    fn serialize(self: &Self) -> Vec<u8> {
+        let mut result = u64::to_le_bytes(self.amount).to_vec();
+        result.extend(self.script_pubkey.serialize());
+        result
+    }
 }

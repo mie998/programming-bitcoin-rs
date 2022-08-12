@@ -20,7 +20,7 @@ where
     }
 }
 
-pub fn encode_varint(i: u128) -> Result<Vec<u8>, String> {
+pub fn encode_varint(i: usize) -> Result<Vec<u8>, String> {
     if i < 0xfd {
         Ok(vec![i as u8])
     } else if i < 0x10000 {
