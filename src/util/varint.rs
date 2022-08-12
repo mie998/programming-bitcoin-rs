@@ -1,14 +1,11 @@
+use super::reader::read;
 use std::io::Read;
 
 pub fn read_varint<R>(mut reader: R) -> Vec<u8>
 where
     R: Read,
 {
-    let mut buf_len1 = vec![0u8; 1];
-    match reader.read_exact(&mut buf_len1) {
-        Ok(_) => {}
-        Err(e) => panic!("{}", e),
-    };
+    let buf_len1 = read(reader, 1);
     let valid_len = match buf_len1[0] {
         0xfd => 2,
         0xfe => 4,
@@ -17,12 +14,7 @@ where
     };
 
     if valid_len > 0 {
-        let mut buf = vec![0u8; valid_len];
-        match reader.read_exact(&mut buf) {
-            Ok(_) => {}
-            Err(e) => panic!("{}", e),
-        };
-        buf
+        read(reader, valid_len)
     } else {
         buf_len1
     }
