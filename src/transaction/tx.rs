@@ -1,5 +1,9 @@
+use bitcoin_hashes::Hash;
+
+use crate::util::hex::hex;
 use crate::util::reader::read;
 use crate::util::varint::{self, encode_varint};
+use std::collections::HashMap;
 use std::io::Read;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -23,8 +27,11 @@ pub struct TxOut {
     amount: u64,
     script_pubkey: Vec<u8>,
 }
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct TxFetcher {
+    cache: HashMap<Vec<u8>, Tx>,
+}
 
-// !TODO: 5.5章, 練習問題5 をテストに追加する。
 impl Tx {
     fn parse<R>(reader: R, testnet: bool) -> Self
     where
@@ -117,4 +124,42 @@ impl TxOut {
         result.extend(self.script_pubkey.serialize());
         result
     }
+}
+
+impl TxFetcher {
+    fn new() -> Self {
+        return Self {
+            cache: HashMap::new(),
+        };
+    }
+
+    fn get_url(testnet: bool) -> String {
+        if testnet {
+            String::from("http://testnet.programmingbitcoin.com")
+        } else {
+            String::from("http://mainnet.programmingbitcoin.com")
+        }
+    }
+
+    fn fetch(&self, tx_id: Vec<u8>, testnet: bool, fresh: bool) -> Tx {
+        match (fresh, self.cache.get(&tx_id)) {
+            (true, _) | (false, None) => {
+                let url = format!("{}/tx/{}.hex", TxFetcher::get_url(testnet), hex(tx_id));
+                let response = requests.get(url)
+            }
+            (false, Some(x)) => {
+                self.cache.get(&tx_id).unwrap().testnet = testnet;
+                *self.cache.get(&tx_id).unwrap()
+            }
+        }
+    }
+}
+
+// !TODO: 5.5章, 練習問題5 をテストに追加する。 Script についての実装ができていないので、そちらができた後にテストを追加する。
+#[cfg(test)]
+mod tests {
+    // #[test]
+    // fn hex_test() {
+    //     let b = BigInt::from(8u8);
+    // }
 }
